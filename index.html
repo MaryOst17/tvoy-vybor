@@ -1,7 +1,36 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Твой выбор — твоя свобода | Твоё время</title><style>body{margin:0;background:#f8f7fc;color:#4c2883;font:600 16px system-ui,Arial;text-align:center}main{max-width:540px;margin:auto;padding:20px 12px 50px}h1{font-size:24px;margin:12px 0 18px}.pick,.download{display:inline-block;border:0;border-radius:16px;padding:15px 24px;font:800 18px system-ui;cursor:pointer}.pick{background:#c7ff00;color:#4c2883}.download{background:#542b87;color:white;margin-top:14px}input[type=file]{display:none}canvas{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 8px 28px #3e226022;touch-action:none}section{margin:20px 0 12px}label{display:block;margin:16px 0 8px}input[type=range]{width:85%;accent-color:#643392}.hint{font-size:13px;font-weight:400;color:#6e6381;margin-top:12px}</style></head><body><main><h1>ТВОЙ ВЫБОР — ТВОЯ СВОБОДА</h1><label class="pick" for="file">📷 Выбрать фото</label><input id="file" type="file" accept="image/*"><section><canvas id="card" width="1086" height="1448" aria-label="Предпросмотр карточки"></canvas></section><label for="scale">Масштаб фотографии</label><input id="scale" type="range" min="1" max="3" step="0.01" value="1"><div><button class="download" id="save">↓ Скачать фото PNG</button></div><p class="hint">Перемещай фотографию пальцем или мышкой. Фото обрабатывается только на твоём устройстве.</p></main><script>
 const canvas=document.getElementById('card'),ctx=canvas.getContext('2d'),file=document.getElementById('file'),scale=document.getElementById('scale');const W=1086,H=1448;let photo=null,zoom=1,dx=0,dy=0,drag=false,prev=null;const template=new Image();template.src='template.png';let topLayer=null;
-template.onload=()=>{const tmp=document.createElement('canvas');tmp.width=W;tmp.height=H;const t=tmp.getContext('2d');t.drawImage(template,0,0);let pix=t.getImageData(0,0,W,H);let a=pix.data;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=(y*W+x)*4,r=a[i],g=a[i+1],b=a[i+2];const lime=(g>125&&g>r*1.22&&g>b*1.35);const preserve=(y>=1010)||(x>670&&y<410);const heart=(x<280&&y<280);const dots=(x<270&&y>740&&y<970);a[i+3]=(lime||preserve||heart||dots)?255:0;}t.putImageData(pix,0,0);topLayer=tmp;render();};
-function render(){ctx.clearRect(0,0,W,H);if(!template.complete||!template.naturalWidth)return;ctx.drawImage(template,0,0,W,H);if(photo){ctx.save();ctx.beginPath();ctx.ellipse(504,632,408,455,0,0,Math.PI*2);ctx.clip();const base=Math.max(816/photo.width,910/photo.height),s=base*zoom;const ww=photo.width*s,hh=photo.height*s;ctx.drawImage(photo,504-ww/2+dx,632-hh/2+dy,ww,hh);ctx.restore();if(topLayer)ctx.drawImage(topLayer,0,0);} }
+template.onload=()=>{
+  // Keep the entire design except the photo window. No rectangular masks.
+  const overlay=document.createElement('canvas');overlay.width=W;overlay.height=H;
+  const o=overlay.getContext('2d');o.drawImage(template,0,0,W,H);
+  const pixels=o.getImageData(0,0,W,H),d=pixels.data;
+  const cx=504,cy=632,rx=408,ry=455;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const normalized=((x-cx)/rx)**2+((y-cy)/ry)**2;
+    if(normalized>=1)continue;
+    const i=(y*W+x)*4,r=d[i],g=d[i+1],b=d[i+2];
+    // Only keep lime decorative strokes inside the photo window.
+    // Never keep rectangular areas: those caused the black triangles.
+    const lime=g>135 && g>r*1.38 && g>b*1.30;
+    d[i+3]=lime?255:0;
+  }
+  o.putImageData(pixels,0,0);topLayer=overlay;render();
+};
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(!template.complete||!template.naturalWidth)return;
+  ctx.drawImage(template,0,0,W,H);
+  if(photo){
+    ctx.save();ctx.beginPath();ctx.ellipse(504,632,408,455,0,0,Math.PI*2);ctx.clip();
+    const base=Math.max(816/photo.width,910/photo.height),s=base*zoom;
+    const ww=photo.width*s,hh=photo.height*s;
+    ctx.drawImage(photo,504-ww/2+dx,632-hh/2+dy,ww,hh);
+    ctx.restore();
+    if(topLayer)ctx.drawImage(topLayer,0,0);
+  }
+}
+
 file.onchange=()=>{const f=file.files[0];if(!f)return;const u=URL.createObjectURL(f);const im=new Image();im.onload=()=>{photo=im;zoom=1;dx=dy=0;scale.value=1;render();URL.revokeObjectURL(u)};im.src=u;};scale.oninput=()=>{zoom=+scale.value;render()};
 function pos(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height}}canvas.addEventListener('pointerdown',e=>{if(!photo)return;drag=true;prev=pos(e);canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pos(e);dx+=p.x-prev.x;dy+=p.y-prev.y;prev=p;render()});for(const n of ['pointerup','pointercancel'])canvas.addEventListener(n,()=>drag=false);
 document.getElementById('save').onclick=()=>{if(!photo){alert('Сначала выбери фотографию');return}render();canvas.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tvoy-vybor-tvoya-svoboda.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)},'image/png')};
