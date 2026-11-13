@@ -14,8 +14,14 @@ if(photo){const w=910,h=990,b=Math.max(w/photo.width,h/photo.height),pw=photo.wi
 // graphics atop image
 ctx.strokeStyle='#c9ed58';ctx.lineWidth=15;ctx.beginPath();ctx.arc(1020,460,135,0,Math.PI*1.65);ctx.stroke();ctx.fillStyle='#c9ed58';for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(72+(i%3)*42,790+Math.floor(i/3)*44,10,0,Math.PI*2);ctx.fill()}
 // logo panel top: real original logo, with enough contrast
-ctx.fillStyle='#f8f7ee';ctx.beginPath();ctx.roundRect(36,24,580,146,20);ctx.fill();if(logo.complete&&logo.naturalWidth){ctx.drawImage(logo,58,42,510,112)}
+ctx.fillStyle='#f8f7ee';ctx.beginPath();ctx.roundRect(36,24,520,245,20);ctx.fill();if(logo.complete&&logo.naturalWidth){const maxW=465,maxH=224;const k=Math.min(maxW/logo.naturalWidth,maxH/logo.naturalHeight);const lw=logo.naturalWidth*k,lh=logo.naturalHeight*k;ctx.drawImage(logo,54+(465-lw)/2,34+(224-lh)/2,lw,lh)}
 // editorial lower caption on solid panel
-ctx.fillStyle='#503184';ctx.beginPath();ctx.roundRect(48,1050,984,252,22);ctx.fill();text('ТВОЙ ВЫБОР —',90,1142,80,'#c9ed58');text('ТВОЯ СВОБОДА',90,1230,83,'#ffffff');text('ПЕРМСКИЙ МУНИЦИПАЛЬНЫЙ ОКРУГ',91,1273,24,'#c9ed58');}
+ctx.fillStyle='#503184';ctx.beginPath();ctx.roundRect(48,1050,984,252,22);ctx.fill();text('ТВОЙ ВЫБОР —',90,1142,80,'#c9ed58');text('ТВОЯ СВОБОДА',90,1230,83,'#ffffff');text('ПЕРМСКИЙ МУНИЦИПАЛЬНЫЙ ОКРУГ',91,1273,24,'#c9ed58');drawHandHeart();}
+function drawHandHeart(){// Single-color lime hand-heart symbol, in the lower-right corner
+ctx.save();ctx.translate(925,1172);ctx.scale(1.08,1.08);ctx.strokeStyle='#c9ed58';ctx.lineWidth=11;ctx.lineCap='round';ctx.lineJoin='round';
+// heart formed by thumbs and index fingers
+ctx.beginPath();ctx.moveTo(0,-8);ctx.bezierCurveTo(-23,-43,-65,-37,-66,-5);ctx.bezierCurveTo(-68,20,-32,43,0,66);ctx.bezierCurveTo(32,43,68,20,66,-5);ctx.bezierCurveTo(65,-37,23,-43,0,-8);ctx.stroke();
+// two supporting hands
+ctx.beginPath();ctx.moveTo(-65,0);ctx.bezierCurveTo(-85,4,-87,26,-74,43);ctx.lineTo(-43,77);ctx.bezierCurveTo(-34,87,-22,90,-12,86);ctx.moveTo(65,0);ctx.bezierCurveTo(85,4,87,26,74,43);ctx.lineTo(43,77);ctx.bezierCurveTo(34,87,22,90,12,86);ctx.stroke();ctx.restore();}
 const file=document.getElementById('file');file.onchange=e=>{const f=e.target.files?.[0];if(!f)return;const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{photo=im;scale=1;dx=dy=0;zoom.value=1;draw();URL.revokeObjectURL(url)};im.onerror=()=>{alert('Не удалось открыть фото. Попробуй JPG или PNG.');URL.revokeObjectURL(url)};im.src=url};zoom.oninput=()=>{scale=Number(zoom.value);draw()};canvas.onpointerdown=e=>{if(!photo)return;drag={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)};canvas.onpointermove=e=>{if(!drag)return;const r=canvas.getBoundingClientRect(),k=W/r.width;dx+=(e.clientX-drag.x)*k;dy+=(e.clientY-drag.y)*k;drag={x:e.clientX,y:e.clientY};draw()};canvas.onpointerup=canvas.onpointercancel=()=>drag=null;document.getElementById('save').onclick=()=>{draw();const a=document.createElement('a');a.download='tvoy-vybor-tvoya-svoboda.png';a.href=canvas.toDataURL('image/png');a.click()};draw();
 </script></body></html>
