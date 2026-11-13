@@ -22,7 +22,7 @@ function render(){
   if(!template.complete||!template.naturalWidth)return;
   ctx.drawImage(template,0,0,W,H);
   if(photo){
-    ctx.save();ctx.beginPath();ctx.ellipse(504,632,408,455,0,0,Math.PI*2);ctx.clip();
+    ctx.save();ctx.beginPath();ctx.ellipse(504,632,425,472,0,0,Math.PI*2);ctx.clip();
     const base=Math.max(816/photo.width,910/photo.height),s=base*zoom;
     const ww=photo.width*s,hh=photo.height*s;
     ctx.drawImage(photo,504-ww/2+dx,632-hh/2+dy,ww,hh);
